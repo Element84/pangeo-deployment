@@ -1,0 +1,102 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Pangeo BinderHub Deployment'
+
+Parameters:
+  ClusterName:
+    Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
+    Type: String
+
+  VpcBlock:
+    Type: String
+    Default: 192.168.0.0/16
+    Description: The CIDR range for the VPC. This should be a valid private (RFC 1918) CIDR range.
+
+  Subnet01Block:
+    Type: String
+    Default: 192.168.64.0/18
+    Description: CidrBlock for subnet 01 within the VPC
+
+  Subnet02Block:
+    Type: String
+    Default: 192.168.128.0/18
+    Description: CidrBlock for subnet 02 within the VPC
+
+  Subnet03Block:
+    Type: String
+    Default: 192.168.192.0/18
+    Description: CidrBlock for subnet 03 within the VPC
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "EKS Cluster"
+        Parameters:
+          - ClusterName
+      -
+        Label:
+          default: "Worker Network Configuration"
+        Parameters:
+          - VpcBlock
+          - Subnet01Block
+          - Subnet02Block
+          - Subnet03Block
+Resources:
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/e84-pangeo/ops/cf-templates/01-iam-creation.yaml
+
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/e84-pangeo/ops/cf-templates/02-networking.yaml
+      Parameters:
+        ClusterName: !Ref ClusterName
+        VpcBlock: !Ref VpcBlock
+        Subnet01Block: !Ref Subnet01Block
+        Subnet02Block: !Ref Subnet02Block
+        Subnet03Block: !Ref Subnet03Block
+
+  EKSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://s3.amazonaws.com/e84-pangeo/ops/cf-templates/03-eks-master.yaml
+      Parameters:
+        ClusterName: !Ref ClusterName
+        ClusterServiceRole: !GetAtt IAMStack.Outputs.ClusterServiceRole
+        ClusterSubnets: !GetAtt VPCStack.Outputs.SubnetIds
+        ControlPlaneSecurityGroups: !GetAtt VPCStack.Outputs.ControlPlaneSecurityGroups
+
+Outputs:
+  WorkerNodeIAMRole:
+    Description: The ARN of the worker node IAM role (used by aws-auth-cm.yaml)
+    Value: !GetAtt IAMStack.Outputs.WorkerNodeIAMRole
+    Export:
+      Name: !Sub "${AWS::StackName}-WorkerNode-IAMRole"
+
+  WorkerNodeInstanceProfile:
+    Description: The ARN of the worker node IAM role (used by aws-auth-cm.yaml)
+    Value: !GetAtt IAMStack.Outputs.WorkerNodeInstanceProfile
+    Export:
+      Name: !Sub "${AWS::StackName}-WorkerNode-InstanceProfile"
+
+  SubnetIds:
+    Description: All subnets in the VPC
+    Value: !GetAtt VPCStack.Outputs.SubnetIds
+    Export:
+      Name: !Sub "${AWS::StackName}-VPC-Subnets"
+
+  NodeSecurityGroups:
+    Description: Security group for the cluster control plane communication with worker nodes
+    Value: !GetAtt VPCStack.Outputs.NodeSecurityGroups
+    Export:
+      Name: !Sub "${AWS::StackName}-EKSNode-SGs"
+
+  VpcId:
+    Description: The VPC Id
+    Value: !GetAtt VPCStack.Outputs.VpcId
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID"

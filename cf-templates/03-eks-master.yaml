@@ -1,0 +1,46 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Pangeo BinderHub Deployment - EKS'
+
+Parameters:
+  ClusterName:
+    Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
+    Type: String
+
+  ClusterServiceRole:
+    Description: This is the IAM service role which will allow EKS to interact with AWS services
+    Type: String
+
+  ClusterSubnets:
+    Description: The EKS cluster will be deployed in these subnets
+    Type: List<AWS::EC2::Subnet::Id>
+
+  ControlPlaneSecurityGroups:
+    Description: The security groups to be used by the master
+    Type: List<AWS::EC2::SecurityGroup::Id>
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "EKS Cluster"
+        Parameters:
+          - ClusterName
+          - ControlPlaneSecurityGroup
+
+Resources:
+  KubernetesCluster:
+    Type: "AWS::EKS::Cluster"
+    Properties:
+      Name: !Ref ClusterName
+      Version: "1.10"
+      RoleArn: !Ref ClusterServiceRole
+      ResourcesVpcConfig:
+        SecurityGroupIds: !Ref ControlPlaneSecurityGroups
+        SubnetIds: !Ref ClusterSubnets
+
+Outputs:
+  EksEndpoint:
+    Description: The API endpoint of the Pango kubernetes cluster
+    Value: !GetAtt KubernetesCluster.Endpoint
