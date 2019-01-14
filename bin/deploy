@@ -5,7 +5,6 @@ set -ex
 DEPLOYMENT_NAME="pangeo"
 
 echo "Creating IAM roles, VPC, and EKS cluster"
-./push_cf_templates.sh
 
 aws cloudformation deploy \
   --stack-name "${DEPLOYMENT_NAME}-root" \
