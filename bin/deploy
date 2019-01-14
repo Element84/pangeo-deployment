@@ -1,0 +1,68 @@
+#! /bin/bash
+
+set -ex
+
+DEPLOYMENT_NAME="pangeo"
+
+echo "Creating IAM roles, VPC, and EKS cluster"
+./push_cf_templates.sh
+
+aws cloudformation deploy \
+  --stack-name "${DEPLOYMENT_NAME}-root" \
+  --template-file ../cf-templates/root.yaml \
+  --capabilities CAPABILITY_IAM \
+  --parameter-overrides \
+    VpcBlock='192.168.0.0/16' \
+    Subnet01Block='192.168.64.0/18' \
+    Subnet02Block='192.168.128.0/18' \
+    Subnet03Block='192.168.192.0/18' \
+    ClusterName="${DEPLOYMENT_NAME}"
+
+
+WorkerNodeIAMRole="$(aws cloudformation list-exports \
+                      --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-WorkerNode-IAMRole\`].Value" \
+                      --no-paginate \
+                      --output text\
+                    )"
+
+
+echo "Configuring EKS Cluster"
+./configure_kubernetes.sh "${DEPLOYMENT_NAME}" "${WorkerNodeIAMRole}"
+
+echo "Deploying worker nodes"
+ClusterSubnets="$(aws cloudformation list-exports \
+                    --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-VPC-Subnets\`].Value" \
+                    --no-paginate \
+                    --output text \
+                  )"
+
+ClusterSecurityGroups="$(aws cloudformation list-exports \
+                          --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-EKSNode-SGs\`].Value" \
+                          --no-paginate \
+                          --output text \
+                        )"
+
+WorkerIAMRole="$(aws cloudformation list-exports \
+                  --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-WorkerNode-IAMRole\`].Value" \
+                  --no-paginate \
+                  --output text \
+                )"
+
+WorkerInstanceProfile="$(aws cloudformation list-exports \
+                          --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-WorkerNode-InstanceProfile\`].Value" \
+                          --no-paginate \
+                          --output text \
+                        )"
+
+aws cloudformation deploy \
+  --stack-name "${DEPLOYMENT_NAME}-workers" \
+  --template-file ../cf-templates/04-cluster-nodes.yaml \
+  --parameter-overrides \
+    NodeImageId='ami-0440e4f6b9713faf6' \
+    ClusterSubnets="${ClusterSubnets}" \
+    NodeAutoScalingGroupMinSize=3 \
+    NodeAutoScalingGroupMaxSize=3 \
+    NodeGroupName="${DEPLOYMENT_NAME}-workers" \
+    ClusterName="${DEPLOYMENT_NAME}" \
+    NodeSecurityGroups="${ClusterSecurityGroups}" \
+    WorkerNodeIAMProfile="${WorkerInstanceProfile}"
