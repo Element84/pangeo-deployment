@@ -3,6 +3,7 @@
 set -ex
 
 DEPLOYMENT_NAME="pangeo"
+DEPLOYMENT_BUCKET="e84-pangeo/ops/cf-templates"
 
 echo "Creating IAM roles, VPC, and EKS cluster"
 
@@ -15,8 +16,8 @@ aws cloudformation deploy \
     Subnet01Block='192.168.64.0/18' \
     Subnet02Block='192.168.128.0/18' \
     Subnet03Block='192.168.192.0/18' \
-    ClusterName="${DEPLOYMENT_NAME}"
-
+    ClusterName="${DEPLOYMENT_NAME}" \
+    TemplateBucket="${DEPLOYMENT_BUCKET}"
 
 WorkerNodeIAMRole="$(aws cloudformation list-exports \
                       --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-WorkerNode-IAMRole\`].Value" \

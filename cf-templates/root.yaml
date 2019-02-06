@@ -3,6 +3,10 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Pangeo BinderHub Deployment'
 
 Parameters:
+  TemplateBucket:
+    Description: The S3 bucket (and prefix, if used) where cloudformation tempaltes are located.
+    Type: String
+
   ClusterName:
     Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
     Type: String
@@ -47,12 +51,16 @@ Resources:
   IAMStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/e84-pangeo/ops/cf-templates/01-iam-creation.yaml
+      TemplateURL: !Sub
+      - "https://s3.amazonaws.com/${TemplateBucket}/01-iam-creation.yaml"
+      - { Bucket: !Ref TemplateBucket }
 
   VPCStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/e84-pangeo/ops/cf-templates/02-networking.yaml
+      TemplateURL: !Sub
+      - "https://s3.amazonaws.com/${TemplateBucket}/02-networking.yaml"
+      - { Bucket: !Ref TemplateBucket }
       Parameters:
         ClusterName: !Ref ClusterName
         VpcBlock: !Ref VpcBlock
@@ -63,7 +71,9 @@ Resources:
   EKSStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://s3.amazonaws.com/e84-pangeo/ops/cf-templates/03-eks-master.yaml
+      TemplateURL: !Sub
+      - "https://s3.amazonaws.com/${TemplateBucket}/03-eks-master.yaml"
+      - { Bucket: !Ref TemplateBucket }
       Parameters:
         ClusterName: !Ref ClusterName
         ClusterServiceRole: !GetAtt IAMStack.Outputs.ClusterServiceRole
