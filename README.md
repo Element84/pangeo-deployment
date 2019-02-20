@@ -7,6 +7,8 @@ This project deploys a base Kubernetes stack, and a Pangeo BinderHub on top of i
 
 To deploy the base cluster, use the `bin/deploy` command. 
 
+*Note:* This command assumes you've uploaded the templates in `cfn-templates/` to S3. That S3 location is referenced in the `deploy` script.
+
 To deploy the binderhub, run:
 
 ```
