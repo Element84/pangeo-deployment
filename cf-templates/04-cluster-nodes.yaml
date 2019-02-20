@@ -163,7 +163,6 @@ Resources:
       IamInstanceProfile: !Ref WorkerNodeIAMProfile
       ImageId: !Ref NodeImageId
       InstanceType: !Ref NodeInstanceType
-      KeyName: andrew-macbook # HARDCODED. Fix or remove.
       SecurityGroups: !Ref NodeSecurityGroups
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
