@@ -246,9 +246,13 @@ Resources:
 
 
 Outputs:
-  SubnetIds:
-    Description: All subnets in the VPC
-    Value: !Join [ ",", [ !Ref Subnet01, !Ref Subnet02, !Ref Subnet03 ] ]
+  EksSubnetIds:
+    Description: Subnets for EKS in the VPC
+    Value: !Join [ ",", [ !Ref Subnet01, !Ref Subnet02 ] ]
+
+  WorkerSubnetIds:
+    Description: Subnets for worker nodes in the VPC
+    Value: !Join [ ",", [ !Ref Subnet03 ] ]
 
   ControlPlaneSecurityGroups:
     Description: Security group for the cluster control plane communication with worker nodes

@@ -77,7 +77,7 @@ Resources:
       Parameters:
         ClusterName: !Ref ClusterName
         ClusterServiceRole: !GetAtt IAMStack.Outputs.ClusterServiceRole
-        ClusterSubnets: !GetAtt VPCStack.Outputs.SubnetIds
+        ClusterSubnets: !GetAtt VPCStack.Outputs.EksSubnetIds
         ControlPlaneSecurityGroups: !GetAtt VPCStack.Outputs.ControlPlaneSecurityGroups
 
 Outputs:
@@ -93,11 +93,17 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-WorkerNode-InstanceProfile"
 
-  SubnetIds:
-    Description: All subnets in the VPC
-    Value: !GetAtt VPCStack.Outputs.SubnetIds
+  EksSubnetIds:
+    Description: EKS subnets in the VPC
+    Value: !GetAtt VPCStack.Outputs.EksSubnetIds
     Export:
-      Name: !Sub "${AWS::StackName}-VPC-Subnets"
+      Name: !Sub "${AWS::StackName}-VPC-Eks-Subnets"
+
+  WorkerSubnetIds:
+    Description: Worker subnets in the VPC
+    Value: !GetAtt VPCStack.Outputs.WorkerSubnetIds
+    Export:
+      Name: !Sub "${AWS::StackName}-VPC-Worker-Subnets"
 
   NodeSecurityGroups:
     Description: Security group for the cluster control plane communication with worker nodes

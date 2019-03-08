@@ -31,7 +31,7 @@ echo "Configuring EKS Cluster"
 
 echo "Deploying worker nodes"
 ClusterSubnets="$(aws cloudformation list-exports \
-                    --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-VPC-Subnets\`].Value" \
+                    --query "Exports[?Name==\`${DEPLOYMENT_NAME}-root-VPC-Worker-Subnets\`].Value" \
                     --no-paginate \
                     --output text \
                   )"
