@@ -21,6 +21,16 @@ Parameters:
     Default: 192.168.64.0/18
     Description: CidrBlock for subnet 01 within the VPC
 
+  Subnet02Block:
+    Type: String
+    Default: 192.168.128.0/18
+    Description: CidrBlock for subnet 02 within the VPC
+
+  Subnet03Block:
+    Type: String
+    Default: 192.168.192.0/18
+    Description: CidrBlock for subnet 03 within the VPC
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -35,7 +45,8 @@ Metadata:
         Parameters:
           - VpcBlock
           - Subnet01Block
-
+          - Subnet02Block
+          - Subnet03Block
 Resources:
   IAMStack:
     Type: AWS::CloudFormation::Stack
@@ -54,6 +65,8 @@ Resources:
         ClusterName: !Ref ClusterName
         VpcBlock: !Ref VpcBlock
         Subnet01Block: !Ref Subnet01Block
+        Subnet02Block: !Ref Subnet02Block
+        Subnet03Block: !Ref Subnet03Block
 
   EKSStack:
     Type: AWS::CloudFormation::Stack
